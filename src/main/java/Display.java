@@ -1,12 +1,10 @@
 package main.java;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Scanner;
 
 import javax.swing.JFrame;
@@ -46,7 +44,7 @@ public class Display extends JFrame implements MouseListener {
 	}
 
 	public void init() {
-		setBackground(Color.WHITE);
+		setBackground(Color.WHITE);//TODO:change color here
 		setSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
 		initPlayers();
 		addMouseListener(this);
@@ -58,21 +56,45 @@ public class Display extends JFrame implements MouseListener {
 		player[1] = new Player(grid);  // Human
 	}
 
-	public void initComputerShips() {
-		Grid grid = new Grid();
-		// YOU MUST CHANGE THIS CODE SO THAT THE COMPUTER PLACES
-		// THE SHIPS RANDOMLY INSTEAD OF (0, 0), (1, 1), (6, 6), 
-		// (5, 7), and (0, 5)... (5 POINTS)
+    public void initComputerShips() {
+        Grid grid = new Grid();
+        Random rand = new Random();
+        int patrolLength = 2;
+        int submarineLength = 3;
+        int destroyerLength = 3;
+        int battleshipLength = 4;
+        int carrierLength = 5;
 
-		grid.addShip(2, new Point(0,0), true, "Patrol"); 
-		grid.addShip(3, new Point(1,1), false, "Submarine");
-		grid.addShip(3, new Point(6,6), true, "Destroyer");
-		grid.addShip(4, new Point(5,7), true, "Battleship");
-		grid.addShip(5, new Point(0,5), true, "Carrier");
-		
-		player[0] = new Player(grid);  // Computer
-		grid.print();  // Can see what grid looks like in console if you want
-	}
+
+
+        while(!grid.addShip(patrolLength, new Point(rand.nextInt(10),rand.nextInt(10)), true, "Patrol"))
+        {
+            grid.addShip(patrolLength, new Point(rand.nextInt(10),rand.nextInt(10)), true, "Patrol");
+        }
+
+        while(!grid.addShip(submarineLength, new Point(rand.nextInt(10),rand.nextInt(10)), false, "Submarine"))
+        {
+            grid.addShip(submarineLength,new Point(rand.nextInt(10),rand.nextInt(10)), false, "Submarine");
+        }
+
+        while(!grid.addShip(destroyerLength, new Point(rand.nextInt(10),rand.nextInt(10)), true, "Destroyer"))
+        {
+            grid.addShip(destroyerLength, new Point(rand.nextInt(10),rand.nextInt(10)), true, "Destroyer");
+        }
+
+        while(!grid.addShip(battleshipLength, new Point(rand.nextInt(10),rand.nextInt(10)), true, "Battleship"))
+        {
+            grid.addShip(battleshipLength, new Point(rand.nextInt(10),rand.nextInt(10)), true, "Battleship");
+        }
+
+        while(!grid.addShip(carrierLength, new Point(rand.nextInt(10),rand.nextInt(10)), true, "Carrier"))
+        {
+            grid.addShip(carrierLength,new Point(rand.nextInt(10),rand.nextInt(10)), true, "Carrier");
+        }
+
+        player[0] = new Player(grid);  // Computer
+        grid.print();  // Can see what grid looks like in console if you want
+    }
 
 	public void paint(Graphics g) {
 		super.paint(g);
@@ -221,7 +243,7 @@ public class Display extends JFrame implements MouseListener {
 		ArrayList<Ship> deadShips = grid.getDeadShips();
 		Color c;
 		String s;
-
+//      TODO:change the string to colored squares
 		for (int x = 0; x < columns; x++) {
 			for (int y = 0; y < rows; y++) {
 				switch(grid.getFired(x, y)) {
@@ -358,7 +380,7 @@ public class Display extends JFrame implements MouseListener {
 		int y = arg0.getPoint().y;
 		int xCoord = (x - xOffset) / (CELL_WIDTH + 1);
 		int yCoord = 9 - ((y - GRID_Y_OFFSET) / (CELL_HEIGHT + 1));
-		
+		Grid grid = player[0].getGrid();
 		if (gameState == 0) {
 			// Horizontal/Vertical boxes
 			if (horizFlag &&
@@ -394,26 +416,41 @@ public class Display extends JFrame implements MouseListener {
 			if (xCoord == xClicked && yCoord == yClicked) {
 				if (Utilities.between(xCoord, 0, player[1].getGrid().getColumns()) &&
 					Utilities.between(yCoord, 0, player[1].getGrid().getRows())) {
-						fireOnComputer(xCoord, yCoord);
-						fireOnHuman();
+                    if (grid.getFired(xCoord, yCoord) != 1 || grid.getFired(xCoord, yCoord) != 2 ||
+                            grid.getFired(xCoord, yCoord) != 3) {
+                        fireOnComputer(xCoord, yCoord);
+                        fireOnHuman();
+                    }
 				}
 			}
 		}
 		repaint();
 	}
 	
-	// YOU NEED TO WRITE THIS
+
 	//
 	// Make sure that the grid confirms that the point (x, y) is
 	// on the grid.  If so, fire at it.  (Look at the Grid class
 	// to see what methods can help you do this.)
 	public void fireOnComputer(int xCoord, int yCoord) {
-		Grid grid = player[0].getGrid();
-		Point p = new Point(xCoord, yCoord);
-		// YOU WRITE CODE HERE
-	}
+        Grid grid = player[0].getGrid();
+        Point p = new Point(xCoord, yCoord);
 
-	// THIS IS THE MOST IMPORTANT PART OF YOUR GRADE ON THIS TEST!
+        if (grid.getFired(p.getX(), p.getY()) == 0) {
+            grid.fire(p);
+
+
+            if (grid.gameOver()) {
+
+                JOptionPane.showMessageDialog(new Frame(), "Congrats you won!");
+
+                System.exit(0);
+            }
+        }
+    }
+
+
+
 	//
 	// fireOnHuman() needs improvement. Your mission is to change
 	// it from randomly firing on the human's ships to firing in
@@ -426,14 +463,24 @@ public class Display extends JFrame implements MouseListener {
 	// You can add parameter(s) if you so desire.
 	public void fireOnHuman() {
 		Grid grid = player[1].getGrid();
-		// CHANGE THE CODE BELOW TO MAKE THIS METHOD WORK
-		Point p = new Point((int) (Math.random()*grid.getColumns()), 
+
+		Point p = new Point((int) (Math.random()*grid.getColumns()),
 				(int) (Math.random()*grid.getRows()));
 		if (grid.getFired(p.getX(),p.getY()) == 0) {
 			grid.fire(p);
 		} else {
 			fireOnHuman();
 		}
+
+
+
+
+        if (grid.gameOver()) {
+
+            JOptionPane.showMessageDialog(new Frame(), "HA HA HA I won, you stupid human!");
+
+            System.exit(0);
+        }
 	}	
 }
 
